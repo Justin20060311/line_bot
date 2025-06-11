@@ -1,3 +1,4 @@
+# 引入必要的函式庫
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
@@ -268,8 +269,17 @@ def generate_advice(data):
 
     genai.configure(api_key=api_key)
 
-    prompt = (
-        f"請根據以下使用者資訊，給予個人化且具體的健康建議，內容要包含飲食、運動與注意事項，語氣親切且條列式，並用繁體中文回答：\n"
+    system_instruction = (
+        "你現在是一名專業的健康顧問，你的任務是根據使用者提供的個人健康數據和目標，"
+        "提供個人化、具體且實用的飲食、運動和注意事項建議。請保持語氣親切、專業且條列式呈現，所有回覆都需使用繁體中文。"
+        "確保建議是基於科學原理，但以易於理解的方式呈現。"
+        "目標為增肌時，請強調足夠蛋白質攝取和力量訓練的重要性，並提供相關建議。目標為減脂時，請強調熱量赤字和有氧運動的策略。目標為維持體重時，請強調均衡飲食和規律運動的必要性。"
+        "**請在飲食建議中，為使用者生成一個根據TDEE計算的每日熱量與三大營養素（碳水化合物、蛋白質、脂肪）的建議攝取量表格，表格請使用markdown格式，包含「營養素」、「攝取量（大卡）」和「攝取量（公克）」三列。**"
+        "請避免提供醫療診斷或處方，並在建議中明確指出：『這些建議僅供參考，如有特殊健康狀況或疑慮，請務必諮詢專業醫師或營養師。』"
+    )
+
+    user_query = (
+        f"請根據以下資訊，為我生成健康建議：\n"
         f"性別：{gender}\n"
         f"年齡：{age}\n"
         f"身高：{height} 公分\n"
@@ -278,8 +288,13 @@ def generate_advice(data):
         f"BMR：{bmr} 大卡\n"
         f"TDEE：{tdee} 大卡\n"
         f"運動量：{activity_level}\n"
-        f"目標：{goal}\n"
+        f"我的目標是：{goal}\n"
+        f"請根據我的TDEE {tdee} 大卡，以及目標 {goal}，建議我每日的碳水化合物、蛋白質和脂肪攝取量（大卡與公克）。"
     )
+
+    # 將 system_instruction 和 user_query 組合成最終 prompt
+    prompt = f"{system_instruction}\n\n{user_query}"
+    
     app.logger.info(f"發送給 Gemini 的 prompt: {prompt[:200]}...") # 記錄部分 prompt
 
     try:
