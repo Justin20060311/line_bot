@@ -1,0 +1,7 @@
+Flask
+line-bot-sdk>=3.0.0
+google-generativeai
+Pillow
+markdown
+beautifulsoup4
+gunicorn
